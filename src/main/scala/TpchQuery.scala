@@ -32,7 +32,8 @@ object TpchQuery {
       df.collect().foreach(println)
     else {
       //df.write.mode("overwrite").json(outputDir + "/" + className + ".out") // json to avoid alias
-      df.write.mode("overwrite").format("com.databricks.spark.csv").option("header", "true").save(outputDir + "/" + className)
+      //df.write.mode("overwrite").format("com.databricks.spark.csv").option("header", "true").save(outputDir + "/" + className)
+      df.write.mode("overwrite").parquet(outputDir + "/" + className)
     }
   }
 
