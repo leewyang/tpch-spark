@@ -9,8 +9,6 @@ class Q05 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val decrease = udf { (x: Double, y: Double) => x * (1 - y) }
-
     val forders = order.filter($"o_orderdate" < "1995-01-01" && $"o_orderdate" >= "1994-01-01")
 
     region.filter($"r_name" === "ASIA")
@@ -20,7 +18,7 @@ class Q05 extends TpchQuery {
       .select($"n_name", $"l_extendedprice", $"l_discount", $"l_orderkey", $"s_nationkey")
       .join(forders, $"l_orderkey" === forders("o_orderkey"))
       .join(customer, $"o_custkey" === customer("c_custkey") && $"s_nationkey" === customer("c_nationkey"))
-      .select($"n_name", decrease($"l_extendedprice", $"l_discount").as("value"))
+      .select($"n_name", expr("l_extendedprice * (1 - l_discount)").as("value"))
       .groupBy($"n_name")
       .agg(sum($"value").as("revenue"))
       .sort($"revenue".desc)

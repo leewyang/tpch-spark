@@ -9,10 +9,6 @@ class Q12 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val mul = udf { (x: Double, y: Double) => x * y }
-    val highPriority = udf { (x: String) => if (x == "1-URGENT" || x == "2-HIGH") 1 else 0 }
-    val lowPriority = udf { (x: String) => if (x != "1-URGENT" && x != "2-HIGH") 1 else 0 }
-
     lineitem.filter((
       $"l_shipmode" === "MAIL" || $"l_shipmode" === "SHIP") &&
       $"l_commitdate" < $"l_receiptdate" &&
@@ -21,9 +17,10 @@ class Q12 extends TpchQuery {
       .join(order, $"l_orderkey" === order("o_orderkey"))
       .select($"l_shipmode", $"o_orderpriority")
       .groupBy($"l_shipmode")
-      .agg(sum(highPriority($"o_orderpriority")).as("sum_highorderpriority"),
-        sum(lowPriority($"o_orderpriority")).as("sum_loworderpriority"))
-      .sort($"l_shipmode")
+      .agg(
+        sum(when($"o_orderpriority" === "1-URGENT" || $"o_orderpriority" === "2-HIGH", 1).otherwise(0)).as("sum_highorderpriority"),
+        sum(when($"o_orderpriority" =!= "1-URGENT" || $"o_orderpriority" =!= "2-HIGH", 1).otherwise(0)).as("sum_loworderpriority")
+      ).sort($"l_shipmode")
   }
 
 }

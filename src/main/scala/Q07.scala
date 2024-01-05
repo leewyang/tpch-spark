@@ -9,9 +9,6 @@ class Q07 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val getYear = udf { (x: String) => x.substring(0, 4) }
-    val decrease = udf { (x: Double, y: Double) => x * (1 - y) }
-
     // cache fnation
 
     val fnation = nation.filter($"n_name" === "FRANCE" || $"n_name" === "GERMANY")
@@ -28,8 +25,8 @@ class Q07 extends TpchQuery {
       .filter($"supp_nation" === "FRANCE" && $"cust_nation" === "GERMANY"
         || $"supp_nation" === "GERMANY" && $"cust_nation" === "FRANCE")
       .select($"supp_nation", $"cust_nation",
-        getYear($"l_shipdate").as("l_year"),
-        decrease($"l_extendedprice", $"l_discount").as("volume"))
+        expr("substring(l_shipdate, 0, 4)").as("l_year"),
+        expr("l_extendedprice * (1 - l_discount)").as("volume"))
       .groupBy($"supp_nation", $"cust_nation", $"l_year")
       .agg(sum($"volume").as("revenue"))
       .sort($"supp_nation", $"cust_nation", $"l_year")

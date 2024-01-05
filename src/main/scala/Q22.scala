@@ -9,12 +9,11 @@ class Q22 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val sub2 = udf { (x: String) => x.substring(0, 2) }
-    val phone = udf { (x: String) => x.matches("13|31|23|29|30|18|17") }
-    val isNull = udf { (x: Any) => println(x); true }
+    val countryCodes = List("[I1]", "[I2]", "[I3]", "[I4]", "[I5]", "[I6]", "[I7]")
+    val filterCondition = $"c_acctbal" > 0.00 && substring($"c_phone", 1, 2).isin(countryCodes: _*)
 
-    val fcustomer = customer.select($"c_acctbal", $"c_custkey", sub2($"c_phone").as("cntrycode"))
-      .filter(phone($"cntrycode"))
+    val fcustomer = customer.select($"c_acctbal", $"c_custkey", expr("substring(c_phone, 1, 2) as cntrycode"))
+      .filter(filterCondition)
 
     val avg_customer = fcustomer.filter($"c_acctbal" > 0.0)
       .agg(avg($"c_acctbal").as("avg_acctbal"))
@@ -22,8 +21,6 @@ class Q22 extends TpchQuery {
     order.groupBy($"o_custkey")
       .agg($"o_custkey").select($"o_custkey")
       .join(fcustomer, $"o_custkey" === fcustomer("c_custkey"), "right_outer")
-      //.filter("o_custkey is null")
-      .filter($"o_custkey".isNull)
       .join(avg_customer)
       .filter($"c_acctbal" > $"avg_acctbal")
       .groupBy($"cntrycode")

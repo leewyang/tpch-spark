@@ -9,13 +9,10 @@ class Q14 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val reduce = udf { (x: Double, y: Double) => x * (1 - y) }
-    val promo = udf { (x: String, y: Double) => if (x.startsWith("PROMO")) y else 0 }
-
     part.join(lineitem, $"l_partkey" === $"p_partkey" &&
       $"l_shipdate" >= "1995-09-01" && $"l_shipdate" < "1995-10-01")
-      .select($"p_type", reduce($"l_extendedprice", $"l_discount").as("value"))
-      .agg(sum(promo($"p_type", $"value")) * 100 / sum($"value"))
+      .select($"p_type", expr("l_extendedprice * (1 - l_discount)").as("value"))
+      .agg(sum(when($"p_type".startsWith("PROMO"), $"value").otherwise(0)) * 100 / sum($"value"))
   }
 
 }

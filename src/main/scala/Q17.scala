@@ -9,8 +9,6 @@ class Q17 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val mul02 = udf { (x: Double) => x * 0.2 }
-
     val flineitem = lineitem.select($"l_partkey", $"l_quantity", $"l_extendedprice")
 
     val fpart = part.filter($"p_brand" === "Brand#23" && $"p_container" === "MED BOX")
@@ -19,7 +17,7 @@ class Q17 extends TpchQuery {
     // select
 
     fpart.groupBy("p_partkey")
-      .agg(mul02(avg($"l_quantity")).as("avg_quantity"))
+      .agg(expr("avg(l_quantity) * 0.2").as("avg_quantity"))
       .select($"p_partkey".as("key"), $"avg_quantity")
       .join(fpart, $"key" === fpart("p_partkey"))
       .filter($"l_quantity" < $"avg_quantity")

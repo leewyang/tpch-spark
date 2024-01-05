@@ -9,9 +9,6 @@ class Q09 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val getYear = udf { (x: String) => x.substring(0, 4) }
-    val expr = udf { (x: Double, y: Double, v: Double, w: Double) => x * (1 - y) - (v * w) }
-
     val linePart = part.filter($"p_name".contains("green"))
       .join(lineitem, $"p_partkey" === lineitem("l_partkey"))
 
@@ -21,8 +18,8 @@ class Q09 extends TpchQuery {
       .join(partsupp, $"l_suppkey" === partsupp("ps_suppkey")
         && $"l_partkey" === partsupp("ps_partkey"))
       .join(order, $"l_orderkey" === order("o_orderkey"))
-      .select($"n_name", getYear($"o_orderdate").as("o_year"),
-        expr($"l_extendedprice", $"l_discount", $"ps_supplycost", $"l_quantity").as("amount"))
+      .select($"n_name", expr("substring(o_orderdate, 0, 4)").as("o_year"),
+        expr("l_extendedprice * (1 - l_discount) - (ps_supplycost * l_quantity)").as("amount"))
       .groupBy($"n_name", $"o_year")
       .agg(sum($"amount"))
       .sort($"n_name", $"o_year".desc)

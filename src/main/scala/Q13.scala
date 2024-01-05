@@ -9,10 +9,9 @@ class Q13 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val special = udf { (x: String) => x.matches(".*special.*requests.*") }
 
     customer.join(order, $"c_custkey" === order("o_custkey")
-      && !special(order("o_comment")), "left_outer")
+      && !order("o_comment").like(".*special.*requests.*"), "left_outer")
       .groupBy($"o_custkey")
       .agg(count($"o_orderkey").as("c_count"))
       .groupBy($"c_count")

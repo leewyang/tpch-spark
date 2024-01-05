@@ -9,16 +9,13 @@ class Q16 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val decrease = udf { (x: Double, y: Double) => x * (1 - y) }
-    val complains = udf { (x: String) => x.matches(".*Customer.*Complaints.*") }
-    val polished = udf { (x: String) => x.startsWith("MEDIUM POLISHED") }
-    val numbers = udf { (x: Int) => x.toString().matches("49|14|23|45|19|3|36|9") }
-
-    val fparts = part.filter(($"p_brand" !== "Brand#45") && !polished($"p_type") &&
-      numbers($"p_size"))
+    val fparts = part.filter(
+      ($"p_brand" !== "Brand#45") &&
+      !$"p_type".startsWith("MEDIUM POLILSHED") &&
+      ($"p_size".isin("49","14","23","45","19","3","36","9")))
       .select($"p_partkey", $"p_brand", $"p_type", $"p_size")
 
-    supplier.filter(!complains($"s_comment"))
+    supplier.filter(!($"s_comment".like(".*Customer.*Complaints.*")))
       // .select($"s_suppkey")
       .join(partsupp, $"s_suppkey" === partsupp("ps_suppkey"))
       .select($"ps_partkey", $"ps_suppkey")

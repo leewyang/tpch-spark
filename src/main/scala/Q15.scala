@@ -9,11 +9,9 @@ class Q15 extends TpchQuery {
     import spark.implicits._
     import schemaProvider._
 
-    val decrease = udf { (x: Double, y: Double) => x * (1 - y) }
-
     val revenue = lineitem.filter($"l_shipdate" >= "1996-01-01" &&
       $"l_shipdate" < "1996-04-01")
-      .select($"l_suppkey", decrease($"l_extendedprice", $"l_discount").as("value"))
+      .select($"l_suppkey", expr("l_extendedprice * (1 - l_discount)").as("value"))
       .groupBy($"l_suppkey")
       .agg(sum($"value").as("total"))
     // .cache
